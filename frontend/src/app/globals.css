@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+@font-face {
+  font-family: 'SF Collegiate';
+  src: url('../Utils/Fonts/SF_Collegiate_Solid.ttf') format('truetype');
+  font-weight: normal;
+    font-style: normal;
+}
+

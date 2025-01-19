@@ -171,7 +171,7 @@ const Airdrop = () => {
                             </button>
                         )}
 
-                        {claimedAirdrop && (
+                        {/* {claimedAirdrop && (
                             <button
                                 onClick={() =>
                                     setcheckBalanceBtn((prev) => !prev)
@@ -182,7 +182,7 @@ const Airdrop = () => {
                                     ? "Check Balance"
                                     : "$23234.000"}
                             </button>
-                        )}
+                        )} */}
                     </article>
                 </article>
 

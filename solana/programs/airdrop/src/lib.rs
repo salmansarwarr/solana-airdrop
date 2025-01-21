@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, Token, Transfer };
 
-declare_id!("");
+declare_id!("FR7NVcRWT5WWDAXvNKvJqbFKF4Nm3urGqFvnBwAbktkv");
 
 #[program]
 pub mod airdrop {
@@ -10,7 +10,7 @@ pub mod airdrop {
     pub fn initialize_airdrop(
         ctx: Context<InitializeAirdrop>,
         total_tokens: u64,
-        bump: u8
+        bump: u8            
     ) -> Result<()> {
         let airdrop = &mut ctx.accounts.airdrop;
         airdrop.admin = ctx.accounts.admin.key();
@@ -42,9 +42,9 @@ pub mod airdrop {
 
     pub fn claim(ctx: Context<Claim>) -> Result<()> {
         let user = ctx.accounts.user.key();
-        
+
         let airdrop = &mut ctx.accounts.airdrop;
-        
+
         // Find and update user allocation
         let amount = airdrop.allocations
             .iter_mut()
@@ -59,16 +59,35 @@ pub mod airdrop {
                 }
             })
             .ok_or(CustomError::NothingToClaim)?;
-    
+
         // Update claimed tokens before transfer
         airdrop.claimed_tokens = airdrop.claimed_tokens
             .checked_add(amount)
             .ok_or(CustomError::Overflow)?;
-    
-        // Transfer tokens
+
+        // Calculate tax (1%)
+        let tax_in_tokens = amount.checked_div(100).ok_or(CustomError::Overflow)?; 
+        let net_amount = amount.checked_sub(tax_in_tokens).ok_or(CustomError::Overflow)?;
+        
         let seeds = &[b"airdrop".as_ref(), &[airdrop.bump]];
         let signer_seeds = &[&seeds[..]];
-    
+
+        // Transfer tax in Tokens
+        token::transfer(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.vault.to_account_info(),
+                    to: ctx.accounts.tax_account.to_account_info(),
+                    authority: ctx.accounts.airdrop.to_account_info(),
+                },
+                signer_seeds
+            ),
+            tax_in_tokens
+        )?;
+
+        // Transfer tokens
+
         token::transfer(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -79,9 +98,9 @@ pub mod airdrop {
                 },
                 signer_seeds
             ),
-            amount
+            net_amount
         )?;
-    
+
         Ok(())
     }
 }
@@ -109,11 +128,14 @@ pub struct Claim<'info> {
     #[account(mut)]
     pub airdrop: Account<'info, Airdrop>,
     /// CHECK: This is a token account, not an Anchor account, so it uses AccountInfo
-    #[account(mut)] 
+    #[account(mut)]
     pub vault: AccountInfo<'info>,
     /// CHECK: This is a token account, not an Anchor account, so it uses AccountInfo
     #[account(mut)]
     pub user_token_account: AccountInfo<'info>,
+    /// CHECK: Tax account for SOL transfers
+    #[account(mut)]
+    pub tax_account: AccountInfo<'info>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub token_program: Program<'info, Token>,
@@ -152,4 +174,6 @@ pub enum CustomError {
     NothingToClaim,
     #[msg("Overflow")]
     Overflow,
+    #[msg("Insufficient funds")]
+    InsufficientFunds
 }

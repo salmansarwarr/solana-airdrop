@@ -1,6 +1,7 @@
 const { PublicKey } = require("@solana/web3.js");
 
-const programId = new PublicKey("GXuzrsV8hyhdwA73eajkmKn1QpCrVuASaexCkVvqTsXc");
+// replace with your program id
+const programId = new PublicKey("FR7NVcRWT5WWDAXvNKvJqbFKF4Nm3urGqFvnBwAbktkv");
 const [pda, bump] = PublicKey.findProgramAddressSync(
     [Buffer.from("airdrop")], // Seed(s) used to derive the PDA
     programId                // The program's ID

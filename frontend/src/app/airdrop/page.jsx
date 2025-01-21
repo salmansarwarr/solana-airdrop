@@ -12,7 +12,7 @@ import {
     getAssociatedTokenAddress,
     TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { tokenMintAddress } from "@/constants/constants";
+import { taxRecieverAddress, tokenMintAddress } from "@/constants/constants";
 
 const programId = new PublicKey(idl.address);
 const network = clusterApiUrl("devnet");
@@ -68,11 +68,17 @@ const Airdrop = () => {
         );
 
         try {
+            const taxRecieverPubKey = new PublicKey(taxRecieverAddress)
             const userWallet = provider.wallet.publicKey;
             const userTokenAccount = await getAssociatedTokenAddress(
                 mintAddress, // Replace with your token mint address
                 userWallet
             );
+
+            const taxRecieverTokenAccount = await getAssociatedTokenAddress(
+                mintAddress,
+                taxRecieverPubKey,
+            )
 
             const vault = await getAssociatedTokenAddress(
                 mintAddress,
@@ -84,6 +90,16 @@ const Airdrop = () => {
                 connection,
                 userTokenAccount
             );
+
+            const isTaxRecieverTokenAccountAlreadyMade = await checkIfTokenAccountExists(
+                connection,
+                taxRecieverTokenAccount
+            );
+
+            const isVaultTokenAccountExists = checkIfTokenAccountExists(
+                connection,
+                vault
+            )
 
             if (isTokenAccountAlreadyMade) {
                 console.log(
@@ -105,12 +121,82 @@ const Airdrop = () => {
                 console.log("Token account created:", txId);
             }
 
+            if (isTaxRecieverTokenAccountAlreadyMade) {
+                console.log(
+                    `Token account for tax reciever already exists at ${taxRecieverTokenAccount}, no need to make it`
+                );
+            } else {
+                console.log(
+                    `Token account for tax reciever does not exist at ${taxRecieverTokenAccount}, adding instruction to make it`
+                );
+                const ix = await createAssociatedTokenAccountInstruction(userWallet, taxRecieverTokenAccount, taxRecieverPubKey, mintAddress);
+                const transaction = new Transaction().add(ix);
+                transaction.feePayer = userWallet;
+                transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    
+                // Sign and send the transaction
+                const signedTransaction = await provider.wallet.signTransaction(transaction);
+                const txId = await connection.sendRawTransaction(signedTransaction.serialize());
+                await connection.confirmTransaction(txId);
+                console.log("Token account created:", txId);
+            }
+
+            if (isTokenAccountAlreadyMade) {
+                console.log(
+                    `Token account already exists at ${userTokenAccount}, no need to make it`
+                );
+            } else {
+                console.log(
+                    `Token account does not exist at ${userTokenAccount}, adding instruction to make it`
+                );
+                const ix = await createAssociatedTokenAccountInstruction(userWallet, userTokenAccount, userWallet, mintAddress);
+                const transaction = new Transaction().add(ix);
+                transaction.feePayer = userWallet;
+                transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    
+                // Sign and send the transaction
+                const signedTransaction = await provider.wallet.signTransaction(transaction);
+                const txId = await connection.sendRawTransaction(signedTransaction.serialize());
+                await connection.confirmTransaction(txId);
+                console.log("Token account created:", txId);
+            }
+
+            if (isVaultTokenAccountExists) {
+                console.log(
+                    `Token account for vault already exists at ${vault}, no need to make it`
+                );
+            } else {
+                console.log(
+                    `Token account for vault does not exist at ${vault}, adding instruction to make it`
+                );
+                const ix = await createAssociatedTokenAccountInstruction(userWallet, vault, airdropPDA, mintAddress);
+                const transaction = new Transaction().add(ix);
+                transaction.feePayer = userWallet;
+                transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    
+                // Sign and send the transaction
+                const signedTransaction = await provider.wallet.signTransaction(transaction);
+                const txId = await connection.sendRawTransaction(signedTransaction.serialize());
+                await connection.confirmTransaction(txId);
+                console.log("Token account created:", txId);
+            }
+
+            console.log({
+                airdrop: airdropPDA.toString(),
+                vault: vault.toString(),
+                userTokenAccount: userTokenAccount.toString(),
+                taxAccount: taxRecieverTokenAccount.toString(),
+                user: userWallet.toString(),
+                tokenProgram: TOKEN_PROGRAM_ID,
+            })
+
             await program.methods
                 .claim()
                 .accounts({
                     airdrop: airdropPDA,
                     vault: vault,
                     userTokenAccount: userTokenAccount,
+                    taxAccount: taxRecieverTokenAccount,
                     user: userWallet,
                     tokenProgram: TOKEN_PROGRAM_ID,
                 })

@@ -5,6 +5,7 @@ import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import React, { useState } from "react";
 import idl from "../../assets/idl.json";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { tokenDecimals } from "@/constants/constants";
 
 const programId = new PublicKey(idl.address);
 const network = clusterApiUrl("devnet");
@@ -71,7 +72,7 @@ const Home = () => {
         try {
             const recipientData = recipients.map((recipient) => ({
                 address: new PublicKey(recipient.address),
-                amount: new BN(recipient.amount),
+                amount: new BN(recipient.amount * Math.pow(10, tokenDecimals)),
             }));
 
             await program.methods

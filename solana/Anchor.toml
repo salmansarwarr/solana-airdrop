@@ -5,13 +5,13 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-airdrop = "BXVXGEWxVvvDotSk929oeSuBHFhNRGFSjEAdVqhBkGh7"
+airdrop = "FR7NVcRWT5WWDAXvNKvJqbFKF4Nm3urGqFvnBwAbktkv"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/keypair.json"
 
 [scripts]

@@ -6,6 +6,8 @@ import React, { useState } from "react";
 import idl from "../../assets/idl.json";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { tokenDecimals } from "@/constants/constants";
+import Navbar from "@/components/Navbar/Navbar";
+import { toast } from "react-toastify";
 
 const programId = new PublicKey(idl.address);
 const network = clusterApiUrl("devnet");
@@ -106,90 +108,95 @@ const Home = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-            <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6 mb-8">
-                <h2 className="text-xl font-bold text-gray-700 mb-4">
-                    Initialize Airdrop
-                </h2>
-                <input
-                    type="number"
-                    placeholder="Total Tokens"
-                    value={totalTokensInput}
-                    onChange={(e) => setTotalTokensInput(e.target.value)}
-                    className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-                <button
-                    onClick={initializeAirdrop}
-                    className="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
-                >
-                    Initialize Airdrop
-                </button>
-                {message && (
-                    <p className="mt-4 text-center text-sm font-medium text-gray-700">
-                        {message}
-                    </p>
-                )}
+        <>
+            <div className="fixed top-0 left-0 right-0 z-50">
+                <Navbar toast={toast} />
             </div>
-
-            <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
-                <h2 className="text-xl font-bold text-gray-700 mb-4">
-                    Set Allocation
-                </h2>
-                {recipients.map((recipient, index) => (
-                    <div
-                        key={index}
-                        className="flex flex-col md:flex-row items-center mb-4 space-y-2 md:space-y-0 md:space-x-4"
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+                <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6 mb-8">
+                    <h2 className="text-xl font-bold text-gray-700 mb-4">
+                        Initialize Airdrop
+                    </h2>
+                    <input
+                        type="number"
+                        placeholder="Total Tokens"
+                        value={totalTokensInput}
+                        onChange={(e) => setTotalTokensInput(e.target.value)}
+                        className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                    <button
+                        onClick={initializeAirdrop}
+                        className="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
                     >
-                        <input
-                            type="text"
-                            placeholder="Recipient Address"
-                            value={recipient.address}
-                            onChange={(e) =>
-                                handleRecipientChange(
-                                    index,
-                                    "address",
-                                    e.target.value
-                                )
-                            }
-                            className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                        <input
-                            type="number"
-                            placeholder="Amount"
-                            value={recipient.amount}
-                            onChange={(e) =>
-                                handleRecipientChange(
-                                    index,
-                                    "amount",
-                                    e.target.value
-                                )
-                            }
-                            className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
-                        <button
-                            onClick={() => removeRecipient(index)}
-                            className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-300"
+                        Initialize Airdrop
+                    </button>
+                    {message && (
+                        <p className="mt-4 text-center text-sm font-medium text-gray-700">
+                            {message}
+                        </p>
+                    )}
+                </div>
+
+                <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
+                    <h2 className="text-xl font-bold text-gray-700 mb-4">
+                        Set Allocation
+                    </h2>
+                    {recipients.map((recipient, index) => (
+                        <div
+                            key={index}
+                            className="flex flex-col md:flex-row items-center mb-4 space-y-2 md:space-y-0 md:space-x-4"
                         >
-                            Remove
+                            <input
+                                type="text"
+                                placeholder="Recipient Address"
+                                value={recipient.address}
+                                onChange={(e) =>
+                                    handleRecipientChange(
+                                        index,
+                                        "address",
+                                        e.target.value
+                                    )
+                                }
+                                className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            />
+                            <input
+                                type="number"
+                                placeholder="Amount"
+                                value={recipient.amount}
+                                onChange={(e) =>
+                                    handleRecipientChange(
+                                        index,
+                                        "amount",
+                                        e.target.value
+                                    )
+                                }
+                                className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            />
+                            <button
+                                onClick={() => removeRecipient(index)}
+                                className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 transition duration-300"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    ))}
+                    <div className="flex justify-between mt-4">
+                        <button
+                            onClick={addRecipient}
+                            className="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-300"
+                        >
+                            Add Recipient
+                        </button>
+                        <button
+                            onClick={setAllocation}
+                            className="px-4 py-2 bg-purple-500 text-white font-semibold rounded-lg shadow-md hover:bg-purple-600 transition duration-300"
+                        >
+                            Set Allocation
                         </button>
                     </div>
-                ))}
-                <div className="flex justify-between mt-4">
-                    <button
-                        onClick={addRecipient}
-                        className="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-300"
-                    >
-                        Add Recipient
-                    </button>
-                    <button
-                        onClick={setAllocation}
-                        className="px-4 py-2 bg-purple-500 text-white font-semibold rounded-lg shadow-md hover:bg-purple-600 transition duration-300"
-                    >
-                        Set Allocation
-                    </button>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

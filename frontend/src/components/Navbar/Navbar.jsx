@@ -23,7 +23,7 @@ function truncateString(str, maxLength) {
     return str;
 }
 
-const Navbar = ({ toast }) => {
+const Navbar = ({ toast, fetchBalance }) => {
     const pathname = usePathname();
     const [checkWalletConnected, setCheckWalletConnected] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,6 +41,9 @@ const Navbar = ({ toast }) => {
             toast.success(
                 `Connected with public key: ${response.publicKey.toString()}`
             );
+            if (fetchBalance) {
+                await fetchBalance();
+            }
             setWalletAddress(response.publicKey.toString());
         }
     };

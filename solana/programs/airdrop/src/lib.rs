@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, Token, Transfer };
 
-declare_id!("FR7NVcRWT5WWDAXvNKvJqbFKF4Nm3urGqFvnBwAbktkv");
+declare_id!("9tR37zhsZ3EKajLjpHxLQwkSMeQ5SbWqZQKu5iPoGQVH");
 
 #[program]
 pub mod airdrop {
@@ -10,7 +10,7 @@ pub mod airdrop {
     pub fn initialize_airdrop(
         ctx: Context<InitializeAirdrop>,
         total_tokens: u64,
-        bump: u8            
+        bump: u8
     ) -> Result<()> {
         let airdrop = &mut ctx.accounts.airdrop;
         airdrop.admin = ctx.accounts.admin.key();
@@ -29,11 +29,15 @@ pub mod airdrop {
             if
                 let Some(allocation) = airdrop.allocations
                     .iter_mut()
-                    .find(|alloc| alloc.0 == recipient.address)
+                    .find(|alloc| alloc.recipient == recipient.address)
             {
-                allocation.1 = recipient.amount;
+                allocation.amount = recipient.amount;
             } else {
-                airdrop.allocations.push((recipient.address, recipient.amount));
+                airdrop.allocations.push(Allocation {
+                    recipient: recipient.address,
+                    amount: recipient.amount,
+                    claimed: false,
+                });
             }
         }
 
@@ -46,19 +50,13 @@ pub mod airdrop {
         let airdrop = &mut ctx.accounts.airdrop;
 
         // Find and update user allocation
-        let amount = airdrop.allocations
+        let allocation = airdrop.allocations
             .iter_mut()
-            .find(|alloc| alloc.0 == user)
-            .and_then(|allocation| {
-                if allocation.1 > 0 {
-                    let amount = allocation.1;
-                    allocation.1 = 0;
-                    Some(amount)
-                } else {
-                    None
-                }
-            })
+            .find(|alloc| alloc.recipient == user && !alloc.claimed)
             .ok_or(CustomError::NothingToClaim)?;
+
+        let amount = allocation.amount;
+        allocation.claimed = true;
 
         // Update claimed tokens before transfer
         airdrop.claimed_tokens = airdrop.claimed_tokens
@@ -66,9 +64,9 @@ pub mod airdrop {
             .ok_or(CustomError::Overflow)?;
 
         // Calculate tax (1%)
-        let tax_in_tokens = amount.checked_div(100).ok_or(CustomError::Overflow)?; 
+        let tax_in_tokens = amount.checked_div(100).ok_or(CustomError::Overflow)?;
         let net_amount = amount.checked_sub(tax_in_tokens).ok_or(CustomError::Overflow)?;
-        
+
         let seeds = &[b"airdrop".as_ref(), &[airdrop.bump]];
         let signer_seeds = &[&seeds[..]];
 
@@ -146,8 +144,15 @@ pub struct Airdrop {
     pub admin: Pubkey,
     pub total_tokens: u64,
     pub claimed_tokens: u64,
-    pub allocations: Vec<(Pubkey, u64)>,
+    pub allocations: Vec<Allocation>,
     pub bump: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct Allocation {
+    pub recipient: Pubkey,
+    pub amount: u64,
+    pub claimed: bool,
 }
 
 impl Airdrop {
@@ -156,7 +161,7 @@ impl Airdrop {
         8 + // total_tokens: u64
         8 + // claimed_tokens: u64
         4 +
-        (32 + 8) * 100 + // allocations: Vec<(Pubkey, u64)>, assume 100 entries max
+        (32 + 8 + 1) * 100 + // allocations: Vec<(Pubkey, u64)>, assume 100 entries max
         1; // bump: u8
 }
 
@@ -175,5 +180,5 @@ pub enum CustomError {
     #[msg("Overflow")]
     Overflow,
     #[msg("Insufficient funds")]
-    InsufficientFunds
+    InsufficientFunds,
 }

@@ -300,9 +300,9 @@ const Airdrop = () => {
                     alloc.recipient.toBase58() ===
                     provider.wallet.publicKey.toBase58()
             );
-            console.log(allocation.claimed);
+            console.log(Number(allocation.amount.toString()) / 10 ** tokenDecimals);
             setEligibleBalance(
-                allocation && !allocation.claimed
+                allocation 
                     ? Number(allocation.amount.toString()) / 10 ** tokenDecimals
                     : 0
             );

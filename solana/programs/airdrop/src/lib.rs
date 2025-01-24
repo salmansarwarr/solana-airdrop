@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, Token, Transfer };
 
-declare_id!("9tR37zhsZ3EKajLjpHxLQwkSMeQ5SbWqZQKu5iPoGQVH");
+declare_id!("FUQkDvHDgHGdUv9wGzQxLvaQJsrHVBoZeD7Ry3XkERVs");
 
 #[program]
 pub mod airdrop {
@@ -35,8 +35,7 @@ pub mod airdrop {
             } else {
                 airdrop.allocations.push(Allocation {
                     recipient: recipient.address,
-                    amount: recipient.amount,
-                    claimed: false,
+                    amount: recipient.amount
                 });
             }
         }
@@ -52,11 +51,10 @@ pub mod airdrop {
         // Find and update user allocation
         let allocation = airdrop.allocations
             .iter_mut()
-            .find(|alloc| alloc.recipient == user && !alloc.claimed)
+            .find(|alloc| alloc.recipient == user)
             .ok_or(CustomError::NothingToClaim)?;
 
         let amount = allocation.amount;
-        allocation.claimed = true;
 
         // Update claimed tokens before transfer
         airdrop.claimed_tokens = airdrop.claimed_tokens
@@ -151,8 +149,7 @@ pub struct Airdrop {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct Allocation {
     pub recipient: Pubkey,
-    pub amount: u64,
-    pub claimed: bool,
+    pub amount: u64
 }
 
 impl Airdrop {
